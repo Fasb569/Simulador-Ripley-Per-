@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Simulador Crédito - Calendario Real</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: "Inter", Arial, sans-serif;
+      font-weight: 400;
+      background: #f5f7fa;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    h1, h2, h3 {
+      font-family: "Poppins", sans-serif;
+    }
+
+    h1 { font-weight: 700; }
+    h2, h3 { font-weight: 600; }
+
+    .card {
+      background: #fff;
+      padding: 0;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      max-width: 1200px;
+      margin: auto;
+      overflow: hidden;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    header {
+      text-align: center;
+      background: linear-gradient(135deg, #b268e4, #f89d25);
+      color: white;
+      padding: 20px;
+      position: relative;
+    }
+    header h1 { margin: 0; font-size: 26px; }
+
+    .logo img { max-width: 160px; height: auto; margin-bottom: 8px; }
+
+    /* Botón modo oscuro */
+    .toggle-dark {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background: rgba(255,255,255,0.2);
+      border: none;
+      color: white;
+      padding: 8px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: background 0.3s;
+      font-family: "Inter", sans-serif;
+    }
+    .toggle-dark:hover { background: rgba(255,255,255,0.4); }
+
+    /* 🌙 Modo oscuro */
+    body.dark {
+      background: #1e1e1e;
+      color: #f0f0f0;
+    }
+    body.dark .card { background: #2a2a2a; }
+    body.dark .summary-block { background: #3a2a47; border-left: 6px solid #c28ef7; }
+    body.dark table { background: #2a2a2a; color: #f0f0f0; }
+    body.dark th { background: #884AB2; }
+    body.dark tr:nth-child(even) { background: #333; }
+    body.dark tr:hover { background: #4a3a5a; }
+    body.dark input, body.dark select {
+      background: #333; color: #f0f0f0; border: 1px solid #555;
+    }
+    body.dark button { background: rgba(255,255,255,0.2); color: #fff; }
+
+    /* 🔹 Tarjetas resultados */
+    .result-card {
+      background: white;
+      padding: 15px;
+      border-radius: 12px;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+      text-align: center;
+      flex: 1;
+      min-width: 120px;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .result-card h3 {
+      margin: 0;
+      font-size: 16px;
+      color: #884AB2;
+    }
+    .result-card p {
+      margin: 5px 0 0;
+      font-size: 18px;
+      font-weight: 600;
+    }
+    .result-card.updated {
+      transform: scale(1.08);
+      box-shadow: 0 6px 14px rgba(0,0,0,0.15);
+    }
+    body.dark .result-card { background: #3a2a47; color: #f0f0f0; }
+    body.dark .result-card h3 { color: #c28ef7; }
+
+    .form-container {
+      display: flex;
+      gap: 25px;
+      padding: 20px;
+      flex-wrap: wrap;
+    }
+
+    h2 { color: #2c3e50; margin-bottom: 15px; font-size: 20px; }
+    body.dark h2 { color: #f0f0f0; }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+    }
+
+    label {
+      font-weight: 500;
+      display: flex;
+      flex-direction: column;
+      font-size: 14px;
+      color: #34495e;
+    }
+    body.dark label { color: #ddd; }
+
+    input, select {
+      padding: 8px;
+      margin-top: 4px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    .actions { margin-top: 15px; display: flex; gap: 10px; }
+
+    button {
+      background: #884AB2;
+      color: white;
+      border: none;
+      padding: 12px 18px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 15px;
+      font-weight: 600;
+      transition: transform 0.2s, background 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    button:hover {
+      background: #FF930A;
+      transform: scale(1.05);
+    }
+
+    .summary-block {
+      margin: 0 20px 20px;
+      padding: 20px;
+      background: #f6e6ff;
+      border-left: 6px solid #884AB2;
+      border-radius: 12px;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.08);
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.6s ease;
+    }
+    .summary-block.show { opacity: 1; transform: translateY(0); }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 20px;
+      background: #fff;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+    }
+    th, td { border: 1px solid #ddd; padding: 10px; font-size: 14px; }
+    th { font-size: 13px; text-transform: uppercase; text-align: center; }
+    td { text-align: right; }
+
+    tr:nth-child(even) { background: #fafafa; }
+    tr:hover { background: #f6e6ff; }
+
+    /* Animación tabla */
+    #cronograma table {
+      opacity: 0;
+      transform: scale(0.97);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    #cronograma table.show {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    @media (max-width: 900px) {
+      .form-container { flex-direction: column; }
+      .result-card p { font-size: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <!-- Encabezado -->
+    <header>
+      <div class="logo">
+        <img src="Logo_Atento.png" alt="Logo Atento Chile">
+      </div>
+      <h1>Simulador de Crédito - Atento Ripley</h1>
+      <button id="toggleBtn" class="toggle-dark" onclick="toggleDarkMode()">🌙</button>
+    </header>
+
+    <!-- Contenedor formulario + tarjetas -->
+    <div class="form-container">
+      <!-- Formulario -->
+      <div style="flex: 1.2;">
+        <h2>Datos del crédito</h2>
+        <div class="form-grid">
+          <label>Monto:
+            <input type="number" id="monto">
+          </label>
+          <label>TEA (%):
+            <input type="number" id="tea" step="0.01">
+          </label>
+          <label>Plazo (meses):
+            <input type="number" id="plazo">
+          </label>
+          <label>Seguro (% mensual sobre saldo):
+            <select id="seguro">
+              <option value="0.0035">Con Rescate (0.35%)</option>
+              <option value="0.0030">Sin Rescate (0.30%)</option>
+            </select>
+          </label>
+          <label>Fecha de desembolso:
+            <input type="date" id="fecha">
+          </label>
+          <label>Día de pago:
+            <input type="number" id="diaPago">
+          </label>
+        </div>
+        <div class="actions">
+          <button onclick="calcular()"><i class="fa-solid fa-calculator"></i> Calcular</button>
+          <button onclick="limpiar()" style="background:#FF5A5A;">
+            <i class="fa-solid fa-broom"></i> Limpiar
+          </button>
+        </div>
+      </div>
+
+      <!-- Tarjetas resultados -->
+      <div style="flex: 1; display:flex; flex-direction:column; gap:15px; justify-content:center;">
+        <h2>Resultados clave</h2>
+        <div style="display:flex; flex-wrap:wrap; gap:15px;">
+          <div class="result-card"><h3>Cuota</h3><p id="res-cuota">--</p></div>
+          <div class="result-card"><h3>TCEA</h3><p id="res-tcea">--</p></div>
+          <div class="result-card"><h3>Intereses</h3><p id="res-intereses">--</p></div>
+          <div class="result-card"><h3>Seguro</h3><p id="res-seguro">--</p></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Resumen consolidado -->
+    <div id="resumen" class="summary-block">
+      <h2>Resumen Consolidado</h2>
+      <div id="resultados"><p><i>Complete los datos y presione Calcular...</i></p></div>
+    </div>
+
+    <!-- Tabla de cronograma -->
+    <div id="cronograma"></div>
+  </div>
+
+<script>
+/* ---------------------------
+   Animación de números
+   --------------------------- */
+function animateValue(id, start, end, duration, suffix="") {
+  let obj = document.getElementById(id);
+  if (!obj) return;
+  let range = end - start;
+  let startTime = null;
+  function step(timestamp) {
+    if (!startTime) startTime = timestamp;
+    let progress = Math.min((timestamp - startTime) / duration, 1);
+    let value = start + range * progress;
+    // Si es porcentaje y el valor es pequeño, mostrar con 2 decimales
+    if (suffix === "%") {
+      obj.innerText = value.toFixed(2) + suffix;
+    } else {
+      obj.innerText = value.toFixed(2);
+    }
+    if (progress < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+/* ---------------------------
+   Cálculo principal
+   --------------------------- */
+function calcular() {
+  let monto = parseFloat(document.getElementById("monto").value);
+  let tea = parseFloat(document.getElementById("tea").value) / 100;
+  let plazo = parseInt(document.getElementById("plazo").value);
+  let seguroPct = parseFloat(document.getElementById("seguro").value);
+  let fecha = new Date(document.getElementById("fecha").value);
+  let diaPago = parseInt(document.getElementById("diaPago").value);
+
+  if (isNaN(monto) || isNaN(tea) || isNaN(plazo) || isNaN(seguroPct) || isNaN(diaPago) || isNaN(fecha.getTime())) {
+    alert("Por favor complete todos los campos.");
+    return;
+  }
+
+  // td diario a partir de TEA
+  let td = Math.pow(1 + tea, 1/360) - 1;
+
+  // Generar fechas de pago
+  let fechas = [];
+  let fechaPago = new Date(fecha);
+  if (fechaPago.getDate() > diaPago) {
+    fechaPago.setMonth(fechaPago.getMonth() + 2);
+  } else {
+    fechaPago.setMonth(fechaPago.getMonth() + 1);
+  }
+  fechaPago.setDate(diaPago);
+
+  for (let i = 0; i < plazo; i++) {
+    if (i > 0) fechaPago.setMonth(fechaPago.getMonth() + 1);
+    fechas.push(new Date(fechaPago));
+  }
+
+  // Calcular días y tasas por periodo
+  let diasArr = [], tiArr = [], fechaAnt = new Date(fecha);
+  for (let f of fechas) {
+    let dias = Math.round((f - fechaAnt)/(1000*60*60*24));
+    diasArr.push(dias);
+    let ti = Math.pow(1 + td, dias) - 1;
+    tiArr.push(ti);
+    fechaAnt = f;
+  }
+
+  // Buscar cuota por bisección
+  function calcularCuota(monto, plazo, tiArr, seguroPct) {
+    let cuotaMin = 0, cuotaMax = monto * 2, cuota = 0;
+    for (let iter = 0; iter < 100; iter++) {
+      cuota = (cuotaMin + cuotaMax) / 2;
+      let saldo = monto;
+      for (let i = 0; i < plazo; i++) {
+        let interes = saldo * tiArr[i];
+        let seguro = saldo * seguroPct;
+        let amort = cuota - interes - seguro;
+        saldo -= amort;
+      }
+      if (saldo > 0) { cuotaMin = cuota; } else { cuotaMax = cuota; }
+    }
+    return cuota;
+  }
+
+  let cuota = calcularCuota(monto, plazo, tiArr, seguroPct);
+
+  // Generar tabla y totales
+  let saldo = monto, totalIntereses = 0, totalSeguros = 0;
+  let tabla = "<table><tr><th>N°</th><th>Fecha</th><th>Días</th><th>Saldo</th><th>Amortización</th><th>Interés</th><th>Seguro</th><th>Cuota</th></tr>";
+
+  fechaAnt = new Date(fecha);
+  for (let i = 0; i < plazo; i++) {
+    let interes = saldo * tiArr[i];
+    let seguro = saldo * seguroPct;
+    let amort = cuota - interes - seguro;
+    tabla += `<tr>
+      <td style="text-align:center;">${i+1}</td>
+      <td style="text-align:center;">${fechas[i].toLocaleDateString()}</td>
+      <td style="text-align:center;">${diasArr[i]}</td>
+      <td>${saldo.toFixed(2)}</td>
+      <td>${amort.toFixed(2)}</td>
+      <td>${interes.toFixed(2)}</td>
+      <td>${seguro.toFixed(2)}</td>
+      <td>${cuota.toFixed(2)}</td>
+    </tr>`;
+    saldo -= amort;
+    if (saldo < 0.01) saldo = 0;
+    totalIntereses += interes;
+    totalSeguros += seguro;
+  }
+  tabla += "</table>";
+
+  // Flujos para XIRR
+  let flujos = [-monto];
+  let fechasFlujos = [new Date(fecha)];
+  saldo = monto;
+  for (let i = 0; i < plazo; i++) {
+    let interes = saldo * tiArr[i];
+    let seguro = saldo * seguroPct;
+    let amort = cuota - interes - seguro;
+    saldo -= amort;
+    flujos.push(interes + seguro + amort);
+    fechasFlujos.push(new Date(fechas[i]));
+  }
+
+  // Calcular XIRR y TCEA
+  let irr = xirr(flujos, fechasFlujos);
+  let tcea = irr * 100;
+
+  // Animaciones numéricas
+  animateValue("res-cuota", 0, cuota, 800);
+  animateValue("res-tcea", 0, tcea, 800, "%");
+  animateValue("res-intereses", 0, totalIntereses, 800);
+  animateValue("res-seguro", 0, totalSeguros, 800);
+
+  // Animación de tarjetas
+  document.querySelectorAll(".result-card").forEach(card => {
+    card.classList.add("updated");
+    setTimeout(() => card.classList.remove("updated"), 500);
+  });
+
+  // Resumen consolidado con animación
+  document.getElementById("resultados").innerHTML = `
+    <p><b>Monto:</b> ${monto.toFixed(2)}</p>
+    <p><b>TEA:</b> ${(tea*100).toFixed(4)}%</p>
+    <p><b>TEM:</b> ${((Math.pow(1+tea,1/12)-1)*100).toFixed(4)}%</p>
+    <p><b>Plazo:</b> ${plazo} meses</p>
+    <p><b>Cuota fija total:</b> ${cuota.toFixed(2)}</p>
+    <p><b>Total intereses:</b> ${totalIntereses.toFixed(2)}</p>
+    <p><b>Total seguro:</b> ${totalSeguros.toFixed(2)}</p>
+    <p><b>TCEA:</b> ${tcea.toFixed(2)}%</p>
+  `;
+  document.getElementById("resumen").classList.add("show");
+
+  // Tabla con animación
+  document.getElementById("cronograma").innerHTML = tabla;
+  const tbl = document.querySelector("#cronograma table");
+  if (tbl) {
+    // small timeout to ensure CSS transition triggers
+    setTimeout(() => tbl.classList.add("show"), 30);
+  }
+}
+
+/* ---------------------------
+   Limpiar formulario y UI
+   --------------------------- */
+function limpiar() {
+  document.getElementById("monto").value = "";
+  document.getElementById("tea").value = "";
+  document.getElementById("plazo").value = "";
+  document.getElementById("seguro").selectedIndex = 0;
+  document.getElementById("fecha").value = "";
+  document.getElementById("diaPago").value = "";
+
+  document.getElementById("resultados").innerHTML = "<p><i>Complete los datos y presione Calcular...</i></p>";
+  document.getElementById("cronograma").innerHTML = "";
+  document.getElementById("res-cuota").innerText = "--";
+  document.getElementById("res-tcea").innerText = "--";
+  document.getElementById("res-intereses").innerText = "--";
+  document.getElementById("res-seguro").innerText = "--";
+
+  // Quitar clases de animación si quedan
+  document.getElementById("resumen").classList.remove("show");
+  const tbl = document.querySelector("#cronograma table");
+  if (tbl) tbl.classList.remove("show");
+  document.querySelectorAll(".result-card").forEach(card => card.classList.remove("updated"));
+}
+
+/* ---------------------------
+   Toggle modo oscuro + persistencia
+   --------------------------- */
+function toggleDarkMode() {
+  document.body.classList.toggle("dark");
+  let btn = document.getElementById("toggleBtn");
+  if (document.body.classList.contains("dark")) {
+    btn.textContent = "🌑"; // Modo oscuro activo
+    localStorage.setItem("theme", "dark");
+  } else {
+    btn.textContent = "🌙"; // Modo claro activo
+    localStorage.setItem("theme", "light");
+  }
+}
+
+/* ---------------------------
+   XIRR (Newton-Raphson)
+   --------------------------- */
+function xirr(values, dates, guess=0.1) {
+  let tol = 1e-7, maxIter = 100, x = guess;
+  function f(rate) {
+    let res = 0;
+    for (let i=0; i<values.length; i++) {
+      let days = (dates[i]-dates[0])/(1000*60*60*24);
+      res += values[i] / Math.pow(1+rate, days/365);
+    }
+    return res;
+  }
+  function df(rate) {
+    let res = 0;
+    for (let i=0; i<values.length; i++) {
+      let days = (dates[i]-dates[0])/(1000*60*60*24);
+      res += - (days/365) * values[i] / Math.pow(1+rate, (days/365)+1);
+    }
+    return res;
+  }
+  for (let i=0; i<maxIter; i++) {
+    let fx = f(x), dfx = df(x);
+    if (Math.abs(dfx) < 1e-12) break;
+    let x1 = x - fx/dfx;
+    if (Math.abs(x1-x) < tol) return x1;
+    x = x1;
+  }
+  return x;
+}
+
+/* ---------------------------
+   Restaurar preferencia de tema al cargar
+   --------------------------- */
+window.addEventListener('DOMContentLoaded', () => {
+  let theme = localStorage.getItem("theme");
+  let btn = document.getElementById("toggleBtn");
+  if (theme === "dark") {
+    document.body.classList.add("dark");
+    if (btn) btn.textContent = "🌑";
+  } else {
+    if (btn) btn.textContent = "🌙";
+  }
+});
+</script>
+</body>
+</html>
