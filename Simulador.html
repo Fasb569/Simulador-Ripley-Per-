@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Simulador Crédito - Calendario Real</title>
+  <style>
+    body {
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: #f5f7fa;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+
+    h2 {
+      text-align: center;
+      color: #2c3e50;
+      margin-bottom: 20px;
+    }
+
+    .card {
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      max-width: 1200px;
+      margin: auto;
+    }
+
+    .logo {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+    .logo img {
+      max-width: 180px;
+      height: auto;
+    }
+
+    .form-container {
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+    }
+
+    .form-grid {
+      flex: 1;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+    }
+
+    label {
+      font-weight: 600;
+      display: flex;
+      flex-direction: column;
+      font-size: 14px;
+      color: #34495e;
+    }
+
+    input, select {
+      padding: 8px;
+      margin-top: 4px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    .actions {
+      margin-top: 10px;
+      display: flex;
+      gap: 10px;
+    }
+
+    button {
+      background: #884AB2;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 15px;
+      font-weight: 600;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background: #FF930A;
+    }
+
+    #resultados {
+      flex: 1;
+      background: #f6e6ff;
+      border-left: 5px solid #884AB2;
+      padding: 15px;
+      border-radius: 8px;
+      font-size: 15px;
+      min-width: 280px;
+    }
+
+    #cronograma {
+      margin-top: 20px;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 20px;
+      background: #fff;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: right;
+      font-size: 14px;
+    }
+
+    th {
+      background: #884AB2;
+      color: white;
+      font-size: 14px;
+      text-transform: uppercase;
+    }
+
+    tr:nth-child(even) {
+      background: #f9f9f9;
+    }
+
+    tr:hover {
+      background: #f1f7ff;
+    }
+
+    @media (max-width: 900px) {
+      .form-container {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">
+      <img src="Logo_Atento.png" alt="Logo Atento Chile">
+    </div>
+    <h2>Simulador - Atento Ripley</h2>
+
+    <div class="form-container">
+      <div style="flex: 2;">
+        <div class="form-grid">
+          <label>Monto:
+            <input type="number" id="monto" value="">
+          </label>
+          <label>TEA (%):
+            <input type="number" id="tea" value="" step="0.01">
+          </label>
+          <label>Plazo (meses):
+            <input type="number" id="plazo" value="">
+          </label>
+          <label>Seguro (% mensual sobre saldo):
+            <select id="seguro">
+              <option value="0.0035">Con Rescate (0.35%)</option>
+              <option value="0.0030">Sin Rescate (0.30%)</option>
+            </select>
+          </label>
+          <label>Fecha de desembolso:
+            <input type="date" id="fecha" value="">
+          </label>
+          <label>Día de pago:
+            <input type="number" id="diaPago" value="">
+          </label>
+        </div>
+        <div class="actions">
+          <button onclick="calcular()">Calcular</button>
+          <button onclick="limpiar()" style="background:#FF5A5A;">Limpiar</button>
+        </div>
+      </div>
+
+      <div id="resultados">
+        <p><i>Complete los datos y presione Calcular...</i></p>
+      </div>
+    </div>
+
+    <div id="cronograma"></div>
+  </div>
+
+<script>
+function calcular() {
+  let monto = parseFloat(document.getElementById("monto").value);
+  let tea = parseFloat(document.getElementById("tea").value) / 100;
+  let plazo = parseInt(document.getElementById("plazo").value);
+  let seguroPct = parseFloat(document.getElementById("seguro").value);
+  let fecha = new Date(document.getElementById("fecha").value);
+  let diaPago = parseInt(document.getElementById("diaPago").value);
+
+  if (isNaN(monto) || isNaN(tea) || isNaN(plazo) || isNaN(seguroPct) || isNaN(diaPago) || isNaN(fecha.getTime())) {
+    alert("Por favor complete todos los campos.");
+    return;
+  }
+
+  let td = Math.pow(1 + tea, 1/360) - 1;
+
+  let fechas = [];
+  let fechaPago = new Date(fecha);
+
+  if (fechaPago.getDate() > diaPago) {
+    fechaPago.setMonth(fechaPago.getMonth() + 2);
+  } else {
+    fechaPago.setMonth(fechaPago.getMonth() + 1);
+  }
+  fechaPago.setDate(diaPago);
+
+  for (let i = 0; i < plazo; i++) {
+    if (i > 0) fechaPago.setMonth(fechaPago.getMonth() + 1);
+    fechas.push(new Date(fechaPago));
+  }
+
+  let diasArr = [], tiArr = [], fechaAnt = new Date(fecha);
+  for (let f of fechas) {
+    let dias = Math.round((f - fechaAnt)/(1000*60*60*24));
+    diasArr.push(dias);
+    let ti = Math.pow(1 + td, dias) - 1;
+    tiArr.push(ti);
+    fechaAnt = f;
+  }
+
+  function calcularCuota(monto, plazo, tiArr, seguroPct) {
+    let cuotaMin = 0, cuotaMax = monto * 2, cuota = 0;
+    for (let iter = 0; iter < 100; iter++) {
+      cuota = (cuotaMin + cuotaMax) / 2;
+      let saldo = monto;
+      for (let i = 0; i < plazo; i++) {
+        let interes = saldo * tiArr[i];
+        let seguro = saldo * seguroPct;
+        let amort = cuota - interes - seguro;
+        saldo -= amort;
+      }
+      if (saldo > 0) { cuotaMin = cuota; } else { cuotaMax = cuota; }
+    }
+    return cuota;
+  }
+
+  let cuota = calcularCuota(monto, plazo, tiArr, seguroPct);
+
+  let saldo = monto, totalIntereses = 0, totalSeguros = 0;
+  let tabla = "<table><tr><th>N°</th><th>Fecha</th><th>Días</th><th>Saldo</th><th>Amortización</th><th>Interés</th><th>Seguro</th><th>Cuota</th></tr>";
+
+  fechaAnt = new Date(fecha);
+  for (let i = 0; i < plazo; i++) {
+    let interes = saldo * tiArr[i];
+    let seguro = saldo * seguroPct;
+    let amort = cuota - interes - seguro;
+    tabla += `<tr>
+      <td>${i+1}</td>
+      <td>${fechas[i].toLocaleDateString()}</td>
+      <td>${diasArr[i]}</td>
+      <td>${saldo.toFixed(2)}</td>
+      <td>${amort.toFixed(2)}</td>
+      <td>${interes.toFixed(2)}</td>
+      <td>${seguro.toFixed(2)}</td>
+      <td>${cuota.toFixed(2)}</td>
+    </tr>`;
+    saldo -= amort;
+    if (saldo < 0.01) saldo = 0;
+    totalIntereses += interes;
+    totalSeguros += seguro;
+  }
+  tabla += "</table>";
+
+  let flujos = [-monto];
+  saldo = monto;
+  for (let i = 0; i < plazo; i++) {
+    let interes = saldo * tiArr[i];
+    let seguro = saldo * seguroPct;
+    let amort = cuota - interes - seguro;
+    saldo -= amort;
+    flujos.push(interes + seguro + amort);
+  }
+  let irr = tasaInternaRetorno(flujos);
+  let tcea = (Math.pow(1 + irr, 12) - 1) * 100;
+
+  document.getElementById("resultados").innerHTML = `
+    <p><b>Monto:</b> ${monto.toFixed(2)}</p>
+    <p><b>TEA:</b> ${(tea*100).toFixed(4)}%</p>
+    <p><b>TEM:</b> ${((Math.pow(1+tea,1/12)-1)*100).toFixed(4)}%</p>
+    <p><b>Plazo:</b> ${plazo} meses</p>
+    <p><b>Cuota fija total:</b> ${cuota.toFixed(2)}</p>
+    <p><b>Total intereses:</b> ${totalIntereses.toFixed(2)}</p>
+    <p><b>Total seguro:</b> ${totalSeguros.toFixed(2)}</p>
+    <p><b>TCEA:</b> ${tcea.toFixed(2)}%</p>
+  `;
+  document.getElementById("cronograma").innerHTML = tabla;
+}
+
+function tasaInternaRetorno(flujos, guess=0.02) {
+  let maxIter = 1000, tol = 1e-10, rate = guess;
+  for (let i = 0; i < maxIter; i++) {
+    let npv = 0, derv = 0;
+    for (let t = 0; t < flujos.length; t++) {
+      npv += flujos[t] / Math.pow(1+rate, t);
+      if (t > 0) derv += -t * flujos[t] / Math.pow(1+rate, t+1);
+    }
+    let newRate = rate - npv/derv;
+    if (Math.abs(newRate - rate) < tol) return newRate;
+    rate = newRate;
+  }
+  return rate;
+}
+
+function limpiar() {
+  document.getElementById("monto").value = "";
+  document.getElementById("tea").value = "";
+  document.getElementById("plazo").value = "";
+  document.getElementById("seguro").selectedIndex = 0;
+  document.getElementById("fecha").value = "";
+  document.getElementById("diaPago").value = "";
+  document.getElementById("resultados").innerHTML = "<p><i>Complete los datos y presione Calcular...</i></p>";
+  document.getElementById("cronograma").innerHTML = "";
+}
+</script>
+</body>
+</html>
